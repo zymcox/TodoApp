@@ -74,34 +74,11 @@ public class TodoApp {
         }
     }
 
-    private static void printMenu() {
-        System.out.println("\nMeny:");
-        System.out.println("1. Lägg till en person");
-        System.out.println("2. Lägg till en uppgift");
-        System.out.println("3. Lista alla uppgifter");
-        if (hasRole(Role.ROLE_APP_ADMIN)) {
-            System.out.println("4. Ta bort en uppgift");
-            System.out.println("6. Tilldela roll till användare");
-            System.out.println("7. Redigera användare");
-        }
-        System.out.println("5. Avsluta");
-        System.out.print("Välj ett alternativ: ");
-    }
-
-    private static int getUserChoice(Scanner scanner) {
-        try {
-            return Integer.parseInt(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            System.out.println("Ogiltig inmatning. Ange ett nummer.");
-            return -1;
-        }
-    }
-
     private static void authenticateUser(Scanner scanner) {
         System.out.print("Ange användarnamn: ");
-        String username = scanner.nextLine();
+        String username = scanner.nextLine().trim();
         System.out.print("Ange lösenord: ");
-        String password = scanner.nextLine();
+        String password = scanner.nextLine().trim();
 
         Optional<AppUser> user = users.stream()
                 .filter(u -> u.getUsername().equals(username) && u.getPassword().equals(password))
@@ -109,175 +86,162 @@ public class TodoApp {
 
         if (user.isPresent()) {
             currentUser = user.get();
-            System.out.println("Välkommen " + currentUser.getUsername() + "!");
+            System.out.println("Inloggad som " + currentUser.getUsername());
         } else {
-            System.out.println("Ogiltigt användarnamn eller lösenord.");
+            System.out.println("Felaktigt användarnamn eller lösenord.");
         }
     }
 
     private static void registerUser(Scanner scanner) {
         System.out.print("Ange ett användarnamn: ");
-        String username = scanner.nextLine();
+        String username = scanner.nextLine().trim();
+        System.out.print("Ange ett lösenord: ");
+        String password = scanner.nextLine().trim();
 
-        if (users.stream().anyMatch(user -> user.getUsername().equals(username))) {
-            System.out.println("Användarnamnet är redan upptaget. Försök igen.");
+        if (username.isEmpty() || password.isEmpty()) {
+            System.out.println("Användarnamn och lösenord får inte vara tomma.");
             return;
         }
 
-        System.out.print("Ange ett lösenord: ");
-        String password = scanner.nextLine();
+        boolean userExists = users.stream()
+                .anyMatch(user -> user.getUsername().equals(username));
 
-        AppUser newUser = new AppUser(username, password, Role.ROLE_APP_USER);
-        users.add(newUser);
-        currentUser = newUser;
-        System.out.println("Registrering slutförd. Välkommen, " + currentUser.getUsername() + "!");
+        if (userExists) {
+            System.out.println("Användarnamnet är redan upptaget.");
+        } else {
+            users.add(new AppUser(username, password, Role.ROLE_APP_USER));
+            System.out.println("Användare registrerad.");
+        }
     }
 
-    private static boolean hasRole(Role role) {
-        return currentUser.getRole() == role;
+    private static int getUserChoice(Scanner scanner) {
+        try {
+            System.out.print("Ditt val: ");
+            return Integer.parseInt(scanner.nextLine().trim());
+        } catch (NumberFormatException e) {
+            System.out.println("Ogiltigt val. Ange ett nummer.");
+            return -1;
+        }
     }
 
     private static void addPerson(Scanner scanner) {
         System.out.print("Ange personens namn: ");
-        String personName = scanner.nextLine();
-        Person person = new Person(personName);
-        personList.add(person);
-        System.out.println("Person tillagd: " + person);
+        String name = scanner.nextLine().trim();
+        if (name.isEmpty()) {
+            System.out.println("Namnet får inte vara tomt.");
+            return;
+        }
+
+        personList.add(new Person(name));
+        System.out.println("Person tillagd.");
     }
 
     private static void addTask(Scanner scanner, TaskManager taskManager) {
-        if (personList.isEmpty()) {
-            System.out.println("Inga personer tillagda. Lägg till en person först.");
-            return;
-        }
         System.out.print("Ange uppgiftens namn: ");
-        String taskName = scanner.nextLine();
+        String taskName = scanner.nextLine().trim();
 
-        System.out.println("Välj en ansvarig person:");
-        for (Person person : personList) {
-            System.out.println(person.getId() + ": " + person.getName());
+        if (taskName.isEmpty()) {
+            System.out.println("Uppgiftens namn får inte vara tomt.");
+            return;
         }
 
-        System.out.print("Ange personens ID: ");
-        int personId;
+        System.out.println("Tillgängliga personer:");
+        personList.forEach(System.out::println);
+
+        System.out.print("Ange ID för tilldelad person: ");
+        int personId = getUserChoice(scanner);
+
+        Optional<Person> personOptional = personList.stream()
+                .filter(person -> person.getId() == personId)
+                .findFirst();
+
+        if (personOptional.isEmpty()) {
+            System.out.println("Ogiltigt person-ID.");
+            return;
+        }
+
+        System.out.print("Ange deadline (ÅÅÅÅ-MM-DD): ");
         try {
-            personId = Integer.parseInt(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            System.out.println("Ogiltigt person-ID. Försök igen.");
-            return;
+            LocalDate deadline = LocalDate.parse(scanner.nextLine().trim());
+            taskManager.addTask(new Task(taskName, personOptional.get(), deadline));
+        } catch (DateTimeParseException e) {
+            System.out.println("Ogiltigt datumformat.");
         }
+    }
 
-        Person assignedPerson = personList.stream()
-                .filter(p -> p.getId() == personId)
-                .findFirst()
-                .orElse(null);
-
-        if (assignedPerson == null) {
-            System.out.println("Ingen person hittades med det ID:t.");
-            return;
-        }
-
-        LocalDate deadline = null;
-        while (deadline == null) {
-            System.out.print("Ange deadline (yyyy-MM-dd): ");
-            String deadlineInput = scanner.nextLine();
-            if (deadlineInput.isBlank()) {
-                System.out.println("Deadline får inte vara tom. Försök igen.");
-                continue;
-            }
-
-            try {
-                deadline = LocalDate.parse(deadlineInput);
-            } catch (DateTimeParseException e) {
-                System.out.println("Ogiltigt datumformat. Ange datum enligt formatet yyyy-MM-dd.");
-            }
-        }
-
-        taskManager.addTask(new Task(taskName, assignedPerson, deadline));
-        System.out.println("Uppgift tillagd!");
+    private static boolean hasRole(Role role) {
+        return currentUser != null && currentUser.getRole() == role;
     }
 
     private static void removeTask(Scanner scanner, TaskManager taskManager) {
-        System.out.print("Ange uppgiftens ID att ta bort: ");
-        int id = Integer.parseInt(scanner.nextLine());
-        taskManager.removeTask(id);
+        System.out.print("Ange ID för uppgift att ta bort: ");
+        int taskId = getUserChoice(scanner);
+        if (taskId > 0) {
+            taskManager.removeTask(taskId);
+        } else {
+            System.out.println("Ogiltigt task-ID.");
+        }
     }
 
     private static void assignUserRole(Scanner scanner) {
-        System.out.println("Tillgängliga användare:");
-        for (AppUser user : users) {
-            System.out.println("Användarnamn: " + user.getUsername() + ", Roll: " + user.getRole());
-        }
+        System.out.print("Ange användarnamn för att ändra roll: ");
+        String username = scanner.nextLine().trim();
 
-        System.out.print("Ange användarnamnet för den användare du vill ändra rollen för: ");
-        String username = scanner.nextLine();
+        Optional<AppUser> userOptional = users.stream()
+                .filter(user -> user.getUsername().equals(username))
+                .findFirst();
 
-        AppUser userToModify = users.stream()
-                .filter(u -> u.getUsername().equals(username))
-                .findFirst()
-                .orElse(null);
-
-        if (userToModify == null) {
-            System.out.println("Ingen användare hittades med det namnet.");
+        if (userOptional.isEmpty()) {
+            System.out.println("Användare hittades inte.");
             return;
         }
 
-        System.out.println("Välj ny roll: ");
-        System.out.println("1. ROLE_APP_USER");
-        System.out.println("2. ROLE_APP_ADMIN");
+        AppUser user = userOptional.get();
+        System.out.println("Välj ny roll (1: ROLE_APP_USER, 2: ROLE_APP_ADMIN): ");
+        int roleChoice = getUserChoice(scanner);
 
-        String choice = scanner.nextLine();
-        Role newRole = switch (choice) {
-            case "1" -> Role.ROLE_APP_USER;
-            case "2" -> Role.ROLE_APP_ADMIN;
-            default -> {
-                System.out.println("Ogiltigt val.");
-                yield null;
-            }
-        };
-
-        if (newRole != null) {
-            users.remove(userToModify);
-            users.add(new AppUser(userToModify.getUsername(), userToModify.getPassword(), newRole));
-            System.out.println("Rollen för användare " + username + " är nu " + newRole);
+        switch (roleChoice) {
+            case 1 -> user.setRole(Role.ROLE_APP_USER);
+            case 2 -> user.setRole(Role.ROLE_APP_ADMIN);
+            default -> System.out.println("Ogiltigt val.");
         }
+
+        System.out.println("Roll uppdaterad för " + user.getUsername());
     }
 
     private static void editUser(Scanner scanner) {
-        System.out.println("Lista över användare:");
-        for (AppUser user : users) {
-            System.out.println("Användarnamn: " + user.getUsername() + ", Roll: " + user.getRole());
-        }
+        System.out.print("Ange användarnamn att redigera: ");
+        String username = scanner.nextLine().trim();
 
-        System.out.print("Ange användarnamnet för den användare du vill redigera: ");
-        String username = scanner.nextLine();
-
-        AppUser userToEdit = users.stream()
+        Optional<AppUser> userOptional = users.stream()
                 .filter(user -> user.getUsername().equals(username))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
 
-        if (userToEdit == null) {
-            System.out.println("Ingen användare hittades med det namnet.");
+        if (userOptional.isEmpty()) {
+            System.out.println("Användare hittades inte.");
             return;
         }
 
-        System.out.print("Ange nytt användarnamn (lämna tomt för att behålla nuvarande): ");
-        String newUsername = scanner.nextLine();
-        if (!newUsername.isBlank() && !newUsername.equals(userToEdit.getUsername())) {
-            if (users.stream().anyMatch(user -> user.getUsername().equals(newUsername))) {
-                System.out.println("Användarnamnet är redan upptaget. Ingen ändring gjord.");
-            } else {
-                userToEdit.setUsername(newUsername);
-            }
-        }
+        AppUser user = userOptional.get();
+        System.out.print("Ange nytt lösenord: ");
+        String newPassword = scanner.nextLine().trim();
 
-        System.out.print("Ange nytt lösenord (lämna tomt för att behålla nuvarande): ");
-        String newPassword = scanner.nextLine();
-        if (!newPassword.isBlank()) {
-            userToEdit.setPassword(newPassword);
+        if (newPassword.isEmpty()) {
+            System.out.println("Lösenordet får inte vara tomt.");
+        } else {
+            user.setPassword(newPassword);
+            System.out.println("Lösenord uppdaterat.");
         }
+    }
 
-        System.out.println("Användaren har uppdaterats.");
+    private static void printMenu() {
+        System.out.println("\nMeny:");
+        System.out.println("1. Lägg till person");
+        System.out.println("2. Lägg till uppgift");
+        System.out.println("3. Lista alla uppgifter");
+        System.out.println("4. Ta bort uppgift (Endast admin)");
+        System.out.println("5. Avsluta");
+        System.out.println("6. Tilldela roll (Endast admin)");
+        System.out.println("7. Redigera användare (Endast admin)");
     }
 }

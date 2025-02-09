@@ -1,7 +1,6 @@
 package se.lexicon;
 
 public class AppUser {
-
     public enum Role {
         ROLE_APP_USER,
         ROLE_APP_ADMIN
@@ -9,7 +8,7 @@ public class AppUser {
 
     private String username;
     private String password;
-    private final Role role;
+    private Role role;
 
     public AppUser(String username, String password, Role role) {
         this.username = username;
@@ -25,20 +24,23 @@ public class AppUser {
         return password;
     }
 
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     public Role getRole() {
         return role;
     }
 
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
     @Override
     public String toString() {
-        return "Användare: " + username + " (" + role + ")";
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
+        return "AppUser{" +
+                "username='" + username + '\'' +
+                ", role=" + role +
+                '}';
     }
 }

@@ -1,12 +1,12 @@
 package se.lexicon;
 
 public class Person {
-    private static int idCounter = 0;
+    private static int idCounter = 1;
     private final int id;
-    private final String name;
+    private String name;
 
     public Person(String name) {
-        this.id = ++idCounter;
+        this.id = idCounter++;
         this.name = name;
     }
 
@@ -18,8 +18,15 @@ public class Person {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     @Override
     public String toString() {
-        return name + " (ID: " + id + ")";
+        return "Person{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                '}';
     }
 }

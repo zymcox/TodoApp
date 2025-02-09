@@ -2,25 +2,30 @@ package se.lexicon;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class TaskManager {
-    private final List<Task> tasks = new ArrayList<>();
+    private final List<Task> taskList = new ArrayList<>();
 
     public void addTask(Task task) {
-        tasks.add(task);
+        taskList.add(task);
+        System.out.println("Uppgift tillagd: " + task);
     }
 
     public void listTasks() {
-        if (tasks.isEmpty()) {
-            System.out.println("Inga uppgifter att visa.");
-        } else {
-            System.out.println("Uppgifter:");
-            tasks.forEach(task -> System.out.println(task.toString()));
-        }
+        taskList.forEach(System.out::println);
     }
 
-    public void removeTask(int id) {
-        tasks.removeIf(task -> task.getId() == id);
-        System.out.println("Uppgift borttagen om den existerade.");
+    public void removeTask(int taskId) {
+        Optional<Task> taskToRemove = taskList.stream()
+                .filter(task -> task.getId() == taskId)
+                .findFirst();
+
+        if (taskToRemove.isPresent()) {
+            taskList.remove(taskToRemove.get());
+            System.out.println("Uppgift borttagen.");
+        } else {
+            System.out.println("Ingen uppgift med det ID hittades.");
+        }
     }
 }

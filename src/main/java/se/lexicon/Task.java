@@ -3,12 +3,11 @@ package se.lexicon;
 import java.time.LocalDate;
 
 public class Task {
-
     private static int idCounter = 1;
     private final int id;
-    private final String name;
-    private final Person assignedPerson;
-    private final LocalDate deadline;
+    private String name;
+    private Person assignedPerson;
+    private LocalDate deadline;
 
     public Task(String name, Person assignedPerson, LocalDate deadline) {
         this.id = idCounter++;
@@ -35,8 +34,11 @@ public class Task {
 
     @Override
     public String toString() {
-        return "Uppgift [ID: " + id + ", Namn: " + name +
-                ", Ansvarig: " + assignedPerson.getName() +
-                ", Deadline: " + deadline + "]";
+        return "Task{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", assignedPerson=" + assignedPerson +
+                ", deadline=" + deadline +
+                '}';
     }
 }
