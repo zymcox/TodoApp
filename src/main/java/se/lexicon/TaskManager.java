@@ -15,7 +15,7 @@ public class TaskManager {
             System.out.println("Inga uppgifter att visa.");
         } else {
             System.out.println("Uppgifter:");
-            tasks.forEach(System.out::println);
+            tasks.forEach(task -> System.out.println(task.toString()));
         }
     }
 

@@ -1,7 +1,7 @@
 package se.lexicon;
 
 public class Person {
-    private static int idCounter = 100;
+    private static int idCounter = 0;
     private final int id;
     private final String name;
 
