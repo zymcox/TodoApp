@@ -62,6 +62,13 @@ public class TodoApp {
                         System.out.println("Endast administratörer kan tilldela roller.");
                     }
                 }
+                case 7 -> {
+                    if (hasRole(Role.ROLE_APP_ADMIN)) {
+                        editUser(scanner);
+                    } else {
+                        System.out.println("Endast administratörer kan redigera användare.");
+                    }
+                }
                 default -> System.out.println("Ogiltigt val, försök igen.");
             }
         }
@@ -75,6 +82,7 @@ public class TodoApp {
         if (hasRole(Role.ROLE_APP_ADMIN)) {
             System.out.println("4. Ta bort en uppgift");
             System.out.println("6. Tilldela roll till användare");
+            System.out.println("7. Redigera användare");
         }
         System.out.println("5. Avsluta");
         System.out.print("Välj ett alternativ: ");
@@ -233,5 +241,43 @@ public class TodoApp {
             users.add(new AppUser(userToModify.getUsername(), userToModify.getPassword(), newRole));
             System.out.println("Rollen för användare " + username + " är nu " + newRole);
         }
+    }
+
+    private static void editUser(Scanner scanner) {
+        System.out.println("Lista över användare:");
+        for (AppUser user : users) {
+            System.out.println("Användarnamn: " + user.getUsername() + ", Roll: " + user.getRole());
+        }
+
+        System.out.print("Ange användarnamnet för den användare du vill redigera: ");
+        String username = scanner.nextLine();
+
+        AppUser userToEdit = users.stream()
+                .filter(user -> user.getUsername().equals(username))
+                .findFirst()
+                .orElse(null);
+
+        if (userToEdit == null) {
+            System.out.println("Ingen användare hittades med det namnet.");
+            return;
+        }
+
+        System.out.print("Ange nytt användarnamn (lämna tomt för att behålla nuvarande): ");
+        String newUsername = scanner.nextLine();
+        if (!newUsername.isBlank() && !newUsername.equals(userToEdit.getUsername())) {
+            if (users.stream().anyMatch(user -> user.getUsername().equals(newUsername))) {
+                System.out.println("Användarnamnet är redan upptaget. Ingen ändring gjord.");
+            } else {
+                userToEdit.setUsername(newUsername);
+            }
+        }
+
+        System.out.print("Ange nytt lösenord (lämna tomt för att behålla nuvarande): ");
+        String newPassword = scanner.nextLine();
+        if (!newPassword.isBlank()) {
+            userToEdit.setPassword(newPassword);
+        }
+
+        System.out.println("Användaren har uppdaterats.");
     }
 }

@@ -7,8 +7,8 @@ public class AppUser {
         ROLE_APP_ADMIN
     }
 
-    private final String username;
-    private final String password;
+    private String username;
+    private String password;
     private final Role role;
 
     public AppUser(String username, String password, Role role) {
@@ -32,5 +32,13 @@ public class AppUser {
     @Override
     public String toString() {
         return "Användare: " + username + " (" + role + ")";
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }
