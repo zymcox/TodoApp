@@ -18,9 +18,8 @@ public class TodoApp {
         TaskManager taskManager = new TaskManager();
         Scanner scanner = new Scanner(System.in);
 
-        // Skapa några standardanvändare
-        users.add(new AppUser("admin", "admin123", Role.ROLE_APP_ADMIN));
-        users.add(new AppUser("user", "user123", Role.ROLE_APP_USER));
+        // Fördefinierad administratör "uffe"
+        users.add(new AppUser("uffe", "abc", Role.ROLE_APP_ADMIN));
 
         while (currentUser == null) {
             System.out.println("\n1. Logga in");
@@ -56,6 +55,13 @@ public class TodoApp {
                     scanner.close();
                     return;
                 }
+                case 6 -> {
+                    if (hasRole(Role.ROLE_APP_ADMIN)) {
+                        assignUserRole(scanner);
+                    } else {
+                        System.out.println("Endast administratörer kan tilldela roller.");
+                    }
+                }
                 default -> System.out.println("Ogiltigt val, försök igen.");
             }
         }
@@ -72,46 +78,6 @@ public class TodoApp {
         }
         System.out.println("5. Avsluta");
         System.out.print("Välj ett alternativ: ");
-    }
-
-    private static void assignUserRole(Scanner scanner) {
-        System.out.println("Tillgängliga användare:");
-        for (AppUser user : users) {
-            System.out.println("Användarnamn: " + user.getUsername() + ", Roll: " + user.getRole());
-        }
-
-        System.out.print("Ange användarnamnet för den användare du vill ändra rollen för: ");
-        String username = scanner.nextLine();
-
-        AppUser userToModify = users.stream()
-                .filter(u -> u.getUsername().equals(username))
-                .findFirst()
-                .orElse(null);
-
-        if (userToModify == null) {
-            System.out.println("Ingen användare hittades med det namnet.");
-            return;
-        }
-
-        System.out.println("Välj ny roll: ");
-        System.out.println("1. ROLE_APP_USER");
-        System.out.println("2. ROLE_APP_ADMIN");
-
-        String choice = scanner.nextLine();
-        Role newRole = switch (choice) {
-            case "1" -> Role.ROLE_APP_USER;
-            case "2" -> Role.ROLE_APP_ADMIN;
-            default -> {
-                System.out.println("Ogiltigt val.");
-                yield null;
-            }
-        };
-
-        if (newRole != null) {
-            users.remove(userToModify);
-            users.add(new AppUser(userToModify.getUsername(), userToModify.getPassword(), newRole));
-            System.out.println("Rollen för användare " + username + " är nu " + newRole);
-        }
     }
 
     private static int getUserChoice(Scanner scanner) {
@@ -135,7 +101,7 @@ public class TodoApp {
 
         if (user.isPresent()) {
             currentUser = user.get();
-            System.out.println("Välkommen " + currentUser);
+            System.out.println("Välkommen " + currentUser.getUsername() + "!");
         } else {
             System.out.println("Ogiltigt användarnamn eller lösenord.");
         }
@@ -227,5 +193,45 @@ public class TodoApp {
         System.out.print("Ange uppgiftens ID att ta bort: ");
         int id = Integer.parseInt(scanner.nextLine());
         taskManager.removeTask(id);
+    }
+
+    private static void assignUserRole(Scanner scanner) {
+        System.out.println("Tillgängliga användare:");
+        for (AppUser user : users) {
+            System.out.println("Användarnamn: " + user.getUsername() + ", Roll: " + user.getRole());
+        }
+
+        System.out.print("Ange användarnamnet för den användare du vill ändra rollen för: ");
+        String username = scanner.nextLine();
+
+        AppUser userToModify = users.stream()
+                .filter(u -> u.getUsername().equals(username))
+                .findFirst()
+                .orElse(null);
+
+        if (userToModify == null) {
+            System.out.println("Ingen användare hittades med det namnet.");
+            return;
+        }
+
+        System.out.println("Välj ny roll: ");
+        System.out.println("1. ROLE_APP_USER");
+        System.out.println("2. ROLE_APP_ADMIN");
+
+        String choice = scanner.nextLine();
+        Role newRole = switch (choice) {
+            case "1" -> Role.ROLE_APP_USER;
+            case "2" -> Role.ROLE_APP_ADMIN;
+            default -> {
+                System.out.println("Ogiltigt val.");
+                yield null;
+            }
+        };
+
+        if (newRole != null) {
+            users.remove(userToModify);
+            users.add(new AppUser(userToModify.getUsername(), userToModify.getPassword(), newRole));
+            System.out.println("Rollen för användare " + username + " är nu " + newRole);
+        }
     }
 }
